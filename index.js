@@ -3,8 +3,7 @@ const fs = require('fs')
 
 const glob = require("glob")
 const archiver = require("archiver");
-// const axios = require('axios')
-const request = require('request')
+const axios = require('axios')
 const FormData = require('form-data')
 
 const DefaultMaxContentLength = 10000000000
@@ -29,31 +28,26 @@ result.forEach((targetPath) => {
   }
 })
 
-archive.on('finish', () => { // request is made on 'finish'
-  const formData = {
-    file: {
-      value: archive,
-      options: {
-        filename: 'test.zip',
-        contentType: 'application/zip',
-        knownLength: archive.pointer(), // pass the pointer at the end to form-data
-      },
-    },
-  };
+archive.on('finish', async () => {
+  const form = new FormData()
+  form.append('file', archive, {
+    filename: 'test.zip',
+    contentType: 'application/zip',
+    knownLength: archive.pointer(), // pass the pointer at the end to form-data
+  })
 
-  request.post({
-    url: 'http://localhost:3000',
-    formData,
-    headers: {
-      'content-type': 'multipart/form-data',
-    },
-  }, (err, resp) => {
-    if (err) {
-      console.error(err)
-      return
-    }
-    console.log(resp.body)
-  });
+  try {
+    await axios.post(
+      'http://localhost:3000',
+      form,
+      {
+        headers: form.getHeaders(),
+        maxContentLength: DefaultMaxContentLength
+      }
+    )
+  } catch (err) {
+    console.error(err)
+  }
 })
 
 archive.finalize();

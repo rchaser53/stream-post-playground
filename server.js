@@ -10,7 +10,7 @@ app.use(formidableMiddleware())
 app.post('/', async (req, res) => {
   try {
     fs.createReadStream(req.files.file.path)
-      .pipe(unzip.Extract({ path: 'hongyaDir' }))
+      .pipe(unzip.Extract({ path: 'mesopotamiaDir' }))
   } catch (err) {
     console.error(err)
   }
