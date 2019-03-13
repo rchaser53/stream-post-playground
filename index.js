@@ -1,10 +1,13 @@
 const path = require('path')
 const fs = require('fs')
+
 const glob = require("glob")
 const archiver = require("archiver");
+const axios = require('axios')
+const FormData = require('form-data')
 
+const DefaultMaxContentLength = 10000000000
 const pattern = "./*"
-const output = fs.createWriteStream(path.join(__dirname, '../example.zip'))
 
 const archive = archiver('zip', {
   zlib: { level: 9 }
@@ -13,16 +16,6 @@ const result = glob.sync(pattern, {
   dot: true,
   ignore: './node_modules'
 })
-
-output.on('close', () => {
-  console.log(archive.pointer() + ' total bytes');
-  console.log('archiver has been finalized and the output file descriptor has closed.');
-});
-
-output.on('end', () => {
-  console.log('Data has been drained');
-});
-archive.pipe(output);
 
 result.forEach((targetPath) => {
   const actualPath = path.resolve(targetPath)
@@ -35,9 +28,18 @@ result.forEach((targetPath) => {
   }
 })
 
-archive.finalize();
+const form = new FormData()
+form.append('file', archive)
 
-
-glob.sync(pattern, {
-  ignore: './node_modules'
+axios.post('http://localhost:3000/', form, {
+  headers: form.getHeaders(),
+  maxContentLength: DefaultMaxContentLength
 })
+  .then((ret) => {
+      console.log(ret)
+  })
+  .catch((err) => {
+    console.error(err)
+  })
+
+archive.finalize();
