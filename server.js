@@ -9,8 +9,16 @@ app.use(formidableMiddleware())
 
 app.post('/', async (req, res) => {
   try {
-    fs.createReadStream(req.files.file.path)
-      .pipe(unzip.Extract({ path: 'mesopotamiaDir' }))
+    console.log(1)
+    await (() => {
+      return new Promise((resolve, reject) => {
+        let extract = unzip.createExtract(resolve, reject)
+        fs.createReadStream(req.files.file.path)
+          .pipe(extract({ path: 'mesopotamiaDir' }))
+      })
+    })();
+    console.log(333)
+
   } catch (err) {
     console.error(err)
   }
